@@ -1,6 +1,6 @@
 {
    "AWSTemplateFormatVersion":"2010-09-09",
-   "Description":"VZW CloudFormation Template for creating EC2 instance for Cloudframe",
+   "Description":"My CloudFormation Template for creating EC2 instance for Cloudframe",
    "Parameters":{
       "AmiID":{"Type":"String"},
       "AppID":{"Type":"String"},
