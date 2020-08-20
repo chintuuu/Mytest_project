@@ -1,0 +1,114 @@
+{
+   "AWSTemplateFormatVersion":"2010-09-09",
+   "Description":"VZW CloudFormation Template for creating EC2 instance for Cloudframe",
+   "Parameters":{
+      "AmiID":{"Type":"String"},
+      "AppID":{"Type":"String"},
+      "InstanceType":{"Type":"String"},
+      "KmsKeyId" :{"Type":"String"},
+      "UserID":{"Type":"String"},
+      "Role":{"Type":"String"},
+      "StackName":{"Type":"String"},
+      "SubnetID":{"Type":"String"},
+      "IamProfile":{"Type":"String"},
+      "AMIMonth" :{"Type":"String"},
+      "Ec2RootVolumeSize": {"Description": " Ec2 root volume size","Type": "String","Default": "300"},
+      "SecurityGroups":{"Type":"List<AWS::EC2::SecurityGroup::Id>"}
+   },
+   "Resources":{
+      "EC2Instance":{
+         "Type":"AWS::EC2::Instance",
+         "Properties":{
+            "ImageId":{"Ref":"AmiID"},
+            "InstanceType":{"Ref":"InstanceType"},
+            "BlockDeviceMappings": [
+            {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+            "DeleteOnTermination": "true",
+            "VolumeSize": {
+                "Ref": "Ec2RootVolumeSize"
+                    }
+                }
+            }
+        ],
+            "SubnetId":{"Ref":"SubnetID"},
+             "Ipv6AddressCount": 1,
+            "IamInstanceProfile":{"Ref":"IamProfile"},
+            "SecurityGroupIds":{"Ref":"SecurityGroups"},
+            "Tags":[{"Key":"Userid","Value":{"Ref":"UserID"}}, {"Key":"Vsad","Value":{"Ref":"AppID"}}, {"Key":"Role","Value":{"Ref":"Role"}}, {"Key":"Name","Value":{"Ref":"StackName"}}, {"Key":"Environment","Value":"Prod"}, {"Key":"nostop","Value":"nostop"}, {"Key":"Program","Value":"CFrame-Monitor"}, {"Key":"Team","Value":"cframeawsinfra"}, {"Key":"AMIMonth","Value":{"Ref":"AMIMonth"}},{"Key":"RightSized","Value":"Yes"}]
+         }
+      },
+      "OptAppEbsVolSDC":{
+         "Type":"AWS::EC2::Volume",
+         "Properties":{
+            "VolumeType":"gp2",
+            "Size":"30",
+            "Encrypted" : "true",
+            "KmsKeyId":{"Ref":"KmsKeyId"},
+            "AvailabilityZone":{"Fn::GetAtt":["EC2Instance","AvailabilityZone"]},
+            "Tags":[{"Key":"Userid","Value":{"Ref":"UserID"}},{"Key":"Role","Value":{"Ref":"Role"}},{"Key":"Vsad","Value":{"Ref":"AppID"}},{"Key":"Name","Value":{"Ref":"StackName"}}]
+        }
+      },
+      "VarMqmEbsVolSDD":{
+         "Type": "AWS::EC2::Volume",
+         "Properties":{
+            "VolumeType":"gp2",
+            "Size":"200",
+            "Encrypted" : "true",
+            "KmsKeyId":{"Ref":"KmsKeyId"},
+            "AvailabilityZone":{"Fn::GetAtt":["EC2Instance","AvailabilityZone"]},
+            "Tags":[{"Key":"Userid","Value":{"Ref":"UserID"}},{"Key":"Role","Value":{"Ref":"Role"}},{"Key":"Vsad","Value":{"Ref":"AppID"}},{"Key":"Name","Value":{"Ref":"StackName"}}]
+        }
+      },
+      "VarMqmLogEbsVolSDE":{
+         "Type": "AWS::EC2::Volume",
+         "Properties":{
+            "VolumeType":"gp2",
+            "Size":"10",
+            "Encrypted" : "true",
+            "KmsKeyId":{"Ref":"KmsKeyId"},
+            "AvailabilityZone":{"Fn::GetAtt":["EC2Instance","AvailabilityZone"]},
+            "Tags":[{"Key":"Userid","Value":{"Ref":"UserID"}},{"Key":"Role","Value":{"Ref":"Role"}},{"Key":"Vsad","Value":{"Ref":"AppID"}},{"Key":"Name","Value":{"Ref":"StackName"}}]
+         }
+      },
+      "MPvolSDC":{
+         "Type":"AWS::EC2::VolumeAttachment",
+         "Properties":{
+            "InstanceId":{"Ref":"EC2Instance"},
+            "VolumeId":{"Ref":"OptAppEbsVolSDC"},
+            "Device":"/dev/sdc"
+         }
+      },
+      "MPvolSDD":{
+         "Type":"AWS::EC2::VolumeAttachment",
+         "Properties":{
+            "InstanceId":{"Ref":"EC2Instance"},
+            "VolumeId":{"Ref":"VarMqmEbsVolSDD"},
+            "Device":"/dev/sdd"
+         }
+      },
+      "MPvolSDE":{
+         "Type":"AWS::EC2::VolumeAttachment",
+         "Properties":{
+            "InstanceId":{"Ref":"EC2Instance"},
+            "VolumeId":{"Ref":"VarMqmLogEbsVolSDE"},
+            "Device":"/dev/sde"
+         }
+      }
+   },
+   "Outputs":{
+      "InstanceId":{
+         "Description":"InstanceId of the newly created EC2 instance",
+         "Value":{"Ref":"EC2Instance"}
+      },
+      "AZ":{
+         "Description":"Availability Zone of the newly created EC2 instance",
+         "Value":{"Fn::GetAtt":["EC2Instance","AvailabilityZone"]}
+      },
+      "PrivateIP":{
+         "Description":"PrivateIP of the newly created EC2 instance",
+         "Value":{"Fn::GetAtt":["EC2Instance","PrivateIp"]}
+      }
+   }
+}
