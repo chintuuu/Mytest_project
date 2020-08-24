@@ -1,0 +1,138 @@
+Apache Tomcat 9 installation and deployment on Linux (CentOS):
+
+1. Login as a root user using command: pbrun beroot, choose option (2) and follow the instructions. NOTE: Must have DUO token set up.
+
+
+
+New Instance of Linux will not have JDK installed. So need to install open source.
+
+2. Update the system before installing using command: yum –y update
+
+
+
+3. Install open source JDK using yum command:
+
+yum -y install java-1.8.0-openjdk.x86_64 java-1.8.0-openjdk-devel.x86_64
+
+Check if Installed: java –version --> This will return the java version installed.
+
+
+
+4. Check the java directory: update-alternatives --config java --> This will give us the path where JRE is installed
+
+
+
+5. Navigate to /etc/environment file to add Java Home Environment in that file:
+
+JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.111-1.b15.el7_2.x86_64/jre”
+
+
+
+6. Edit the bash profiles using: nano ~/.bash_profile
+
+Add home environment variable as below:
+
+export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.111-1.b15.el7_2.x86_64/jre
+
+export PATH=$JAVA_HOME/bin:$PATH
+
+Note: you might have other things in your PATH variable. Just add $JAVA_HOME/bin: to the front of your path, like in the example above.
+
+
+
+7. After saving reload bash profile using : source ~/.bash_profile
+
+
+8. Before going forward make sure that this setup is set correct by checking the JAVA_HOME path. Use this command to print that parh: Echo $java_home à Should print the path of the java environment variable
+
+
+
+9. Installing Tomcat Version 9:
+
+In Verizon firewalls do not allow us to download tar.gz folder directly. Instead download it on your regular laptop, use WinSCP and move it to your user's home directory.
+Then, go back to your linux terminal, unzip it, and move it to tomcat folder from the user folder.
+Command to do it:
+tar -xzvf apache-tomcat-9.0.0.version --> unzips the tar folder present in user folder.
+
+mv apache-tomcat-9.0.0.version/* /opt/tomcat/ --> Moves unzipped tomcat folder in user folder to tomcat folder.
+
+Chown –hR tomcat:tomcat tomcat --> Sets the proper ownership.
+
+
+
+10. Make sure that Tomcat is running by this time:
+
+cd /opt/tomcat/bin/ ./startup.sh --> go to ipaddress:8080 you will see tomcat homepage on the browser.
+
+
+
+11. Now we have to create a system service file to run tomcat as a tomcat user. To do so add the content below:
+
+nano /etc/system/system/tomcat.service à This opens tomcat.service file
+
+Content to be added:
+
+[Unit]
+
+Description=Apache Tomcat 8 Servlet Container
+
+After=syslog.target network.target
+
+[Service]
+
+User=tomcat
+
+Group=tomcat
+
+Type=forking
+
+Environment=CATALINA_PID=/opt/tomcat/tomcat.pid
+
+Environment=CATALINA_HOME=/opt/tomcat
+
+Environment=CATALINA_BASE=/opt/tomcat
+
+ExecStart=/opt/tomcat/bin/startup.sh
+
+ExecStop=/opt/tomcat/bin/shutdown.sh
+
+Restart=on-failure
+
+[Install]
+
+WantedBy=multi-user.target
+
+12. Now, run these commands to start and enable tomcat to start on boot:
+
+systemctl daemon-reload 
+
+systemctl start tomcat 
+
+systemctl enable tomcat
+
+systemctl status tomcat --> Returns the status of the tomcat service.
+
+
+
+13. Now, configure the tomcat users by editing tomcat-users.xml:
+
+cd /opt/tomcat/conf/ nano tomcat-users.xml
+
+Content to be added:
+
+<user username="admin" password="password" roles="manager-gui,admin-gui"/>
+
+
+14.  Now, configure the context.xml:
+cd /opt/tomcat/webapps/manager/META-INF/nano context.xml
+Comment out the Valve tag in context file.
+
+
+15.  Finally, restart the tomcat:
+systemctl restart tomcat
+
+Deployment process:
+
+Build React UI code and copy the contents inside JAVA module. Static Folder in build should go inside static folder under resources (src/main/resources)
+and inside webapp folder of the project. Remaining contents should go inside templates folder under resources (src/main/resources) and inside webapp folder. 
+Attaching a screenshot with highlights below:
